@@ -1,0 +1,17 @@
+psycopg2-binary
+gunicorn
+redis
+Faker
+Django
+djangorestframework
+djangorestframework-simplejwt
+django-celery-beat
+django-celery-results
+django-cors-headers
+django-debug-toolbar
+django-import-export
+django-unfold
+django-environ
+django-storages
+boto3
+minio

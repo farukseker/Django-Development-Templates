@@ -1,5 +1,7 @@
 from .base import *
 
+DEBUG = False
+
 CSRF_TRUSTED_ORIGINS = [
     f"https://{env('PRODUCT_HOST')}/",
     f"https://{env('PRODUCT_API_HOST')}"
