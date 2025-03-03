@@ -15,3 +15,4 @@ django-environ
 django-storages
 boto3
 minio
+celery

@@ -1,0 +1,11 @@
+FROM python:3.13-slim
+
+RUN pip install celery django-celery-beat django-celery-results
+
+
+RUN echo "HELLO"
+COPY backend /app
+
+WORKDIR /app
+
+CMD ["celery", "-A", "config", "worker", "--loglevel=info"]

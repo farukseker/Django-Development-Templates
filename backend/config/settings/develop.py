@@ -99,3 +99,24 @@ USE_X_FORWARDED_HOST = True
 
 from django.contrib.staticfiles.storage import staticfiles_storage
 print(staticfiles_storage.url("admin/css/base.css"))
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'graylog': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.DatagramHandler',
+            'host': 'localhost',
+            'port': 12201,
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['graylog'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}

@@ -1,13 +1,12 @@
 services:
-  django:
+  django: &django
     build:
       context: .
       dockerfile: ./backend/Dockerfile
-    # working_dir: ./backend
     container_name: django_app
     restart: always
     ports:
-      - "8000:8000"
+      - "31:8000"
     env_file:
       - /.env
     volumes:
@@ -50,12 +49,12 @@ services:
       - "80:80"
     depends_on:
       - django
-    # networks:
-    #   - app_network
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./backend/static:/app/static  # Statik dosyalar
       - ./backend/media:/app/media    # Medya dosyaları
+    networks:
+      - app_network
 
   minio:
     image: minio/minio
@@ -77,26 +76,45 @@ services:
   redis:
     image: redis:alpine
     ports:
-      - 6379:6379
+      - 2001:6379
+    networks:
+      - app_network
 
-  celery:
-    build: .
-    user: django-user
-    command: ["celery", "-A", "config", "worker", "--loglevel=info"]
-    volumes:
-      - .:/app
+  celery_worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: celery_worker
+    restart: always
     depends_on:
+      - django
       - redis
+    command: celery -A config.celery worker --loglevel=info
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    networks:
+      - app_network
 
-  celerybeat:
-    build: .
-    user: django-user
-    command: ["celery", "-A", "config", "beat", "--loglevel=info", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"]
-    volumes:
-      - .:/app
+  celery_beat:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: celery_beat
+    restart: always
     depends_on:
+      - django
       - redis
-      
+      - celery_worker
+    command: celery -A config.celery beat --loglevel=info
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    networks:
+      - app_network
+
   nuxt:
     build:
       context: .
@@ -104,16 +122,33 @@ services:
     container_name: nuxt_app
     restart: always
     ports:
-      - "3000:3000"
+      - "1000:3000"
     env_file:
       - /.env
     volumes:
       - ./backend:/app
+    networks:
+      - app_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.5
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    networks:
+      - app_network
+    ports:
+      - 2002:9200/tcp
 
 volumes:
   postgres_data:
   minio_data:
-
-# networks:
-#   app_network:
-#     driver: bridge
+  mongo_data:
+  elastic_data:
+  graylog_data:
+  
+networks:
+  app_network:
+    driver: bridge
